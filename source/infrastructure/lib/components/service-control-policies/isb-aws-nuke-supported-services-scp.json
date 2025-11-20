@@ -117,6 +117,7 @@
         "route53:*",
         "route53resolver:*",
         "s3:*",
+        "s3vectors:*",
         "sagemaker:*",
         "scheduler:*",
         "secretsmanager:*",
