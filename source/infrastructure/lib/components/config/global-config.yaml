@@ -24,7 +24,7 @@ leases:
   requireMaxBudget: true
   maxBudget: 50 # in dollars
   requireMaxDuration: true
-  maxDurationHours: 168 # 7 days
+  maxDurationHours: 1680 # 10 weeks (a quarter)
   maxLeasesPerUser: 3
   ttl: 30 # in days
 
