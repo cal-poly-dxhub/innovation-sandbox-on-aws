@@ -132,10 +132,23 @@ export class CostExplorerService {
         Granularity: granularity,
         Metrics: ["UnblendedCost"],
         Filter: {
-          Dimensions: {
-            Key: "LINKED_ACCOUNT",
-            Values: accounts,
-          },
+          And: [
+            {
+              Dimensions: {
+                Key: "LINKED_ACCOUNT",
+                Values: accounts,
+              },
+            },
+            {
+              Not: {
+                Dimensions: {
+                  Key: "RECORD_TYPE",
+                  Values: ["Credit", "Refund"],
+                  MatchOptions: ["EQUALS"],
+                },
+              },
+            },
+          ],
         },
         GroupBy: [
           {
