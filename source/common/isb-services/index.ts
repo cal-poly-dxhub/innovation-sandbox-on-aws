@@ -13,6 +13,10 @@ import {
 } from "@amzn/innovation-sandbox-commons/isb-services/github-service.js";
 import { IdcService } from "@amzn/innovation-sandbox-commons/isb-services/idc-service.js";
 import {
+  VersionStoreService,
+  VersionStoreServiceProps,
+} from "@amzn/innovation-sandbox-commons/isb-services/version-store-service.js";
+import {
   LogArchivingService,
   LogArchivingServiceProps,
 } from "@amzn/innovation-sandbox-commons/isb-services/log-archiving-service.js";
@@ -171,5 +175,9 @@ export class IsbServices {
 
   public static gitHubService(props: GitHubServiceProps) {
     return new GitHubService(props);
+  }
+
+  public static versionStoreService(props: VersionStoreServiceProps) {
+    return new VersionStoreService(props);
   }
 }
