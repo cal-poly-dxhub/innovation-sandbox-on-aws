@@ -21,6 +21,10 @@ import {
   LogArchivingServiceProps,
 } from "@amzn/innovation-sandbox-commons/isb-services/log-archiving-service.js";
 import {
+  ReleaseNotificationService,
+  ReleaseNotificationServiceProps,
+} from "@amzn/innovation-sandbox-commons/isb-services/release-notification-service.js";
+import {
   EmailService,
   EmailServiceProps,
 } from "@amzn/innovation-sandbox-commons/isb-services/notification/email-service.js";
@@ -179,5 +183,9 @@ export class IsbServices {
 
   public static versionStoreService(props: VersionStoreServiceProps) {
     return new VersionStoreService(props);
+  }
+
+  public static releaseNotificationService(props: ReleaseNotificationServiceProps) {
+    return new ReleaseNotificationService(props);
   }
 }
