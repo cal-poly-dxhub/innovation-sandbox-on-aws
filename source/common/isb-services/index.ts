@@ -7,6 +7,10 @@ import { LeaseStore } from "@amzn/innovation-sandbox-commons/data/lease/lease-st
 import { DynamoSandboxAccountStore } from "@amzn/innovation-sandbox-commons/data/sandbox-account/dynamo-sandbox-account-store.js";
 import { SandboxAccountStore } from "@amzn/innovation-sandbox-commons/data/sandbox-account/sandbox-account-store.js";
 import { CostExplorerService } from "@amzn/innovation-sandbox-commons/isb-services/cost-explorer-service.js";
+import {
+  GitHubService,
+  GitHubServiceProps,
+} from "@amzn/innovation-sandbox-commons/isb-services/github-service.js";
 import { IdcService } from "@amzn/innovation-sandbox-commons/isb-services/idc-service.js";
 import {
   LogArchivingService,
@@ -163,5 +167,9 @@ export class IsbServices {
     props: LogArchivingServiceProps,
   ) {
     return new LogArchivingService(env, props);
+  }
+
+  public static gitHubService(props: GitHubServiceProps) {
+    return new GitHubService(props);
   }
 }
