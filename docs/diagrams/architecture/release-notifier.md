@@ -96,3 +96,26 @@ The stack accepts these CloudFormation parameters:
 | GitHubOwner | GitHub repository owner | aws-solutions |
 | GitHubRepo | GitHub repository name | innovation-sandbox-on-aws |
 | NotificationEmail | Email address for notifications | (required) |
+
+
+## Troubleshooting
+
+### CloudWatch Logs Insights Queries
+
+Use these queries against the log group `/aws/lambda/ISB-ReleaseChecker-{namespace}`:
+
+**Recent executions summary:**
+```
+fields @timestamp, message, level
+| filter @message like /Lambda invocation|New release|No new release|First run|No releases found/
+| sort @timestamp desc
+| limit 20
+```
+
+**Errors and warnings:**
+```
+fields @timestamp, level, message, errorType, errorMessage
+| filter level in ["ERROR", "WARN", "CRITICAL"]
+| sort @timestamp desc
+| limit 50
+```

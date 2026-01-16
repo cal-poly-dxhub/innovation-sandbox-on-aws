@@ -1,6 +1,7 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
 import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
+import { CfnQueryDefinition } from "aws-cdk-lib/aws-logs";
 import { CfnSchedule } from "aws-cdk-lib/aws-scheduler";
 import { Topic } from "aws-cdk-lib/aws-sns";
 import { EmailSubscription } from "aws-cdk-lib/aws-sns-subscriptions";
@@ -105,6 +106,32 @@ export class IsbReleaseNotifierResources {
         arn: this.lambda.lambdaFunction.functionArn,
         roleArn: schedulerRole.roleArn,
       },
+    });
+
+    // CloudWatch Logs Insights saved queries
+    const queryFolder = "Release-Notifier/";
+    const logGroupName = `/aws/lambda/${this.lambda.lambdaFunction.functionName}`;
+
+    new CfnQueryDefinition(scope, "ReleaseCheckerExecutions", {
+      name: queryFolder + "ExecutionHistory",
+      logGroupNames: [logGroupName],
+      queryString: `# Release Notifier Execution History
+# Shows the outcome of each scheduled run
+fields @timestamp, message
+| filter message like /New release detected|No new release|First run|No releases found/
+| sort @timestamp desc
+| limit 50`,
+    });
+
+    new CfnQueryDefinition(scope, "ReleaseCheckerErrors", {
+      name: queryFolder + "Errors",
+      logGroupNames: [logGroupName],
+      queryString: `# Release Notifier Errors
+# Shows any errors that occurred during execution
+fields @timestamp, level, message, errorType, errorMessage
+| filter level in ["ERROR", "WARN", "CRITICAL"]
+| sort @timestamp desc
+| limit 50`,
     });
   }
 }
