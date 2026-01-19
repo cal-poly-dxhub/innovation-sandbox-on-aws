@@ -23,17 +23,17 @@ async function main() {
     const release = await githubService.getLatestRelease();
 
     if (release) {
-      console.log("✅ Successfully fetched latest release:\n");
+      console.log("Successfully fetched latest release:\n");
       console.log(`  Tag:       ${release.tagName}`);
       console.log(`  Name:      ${release.releaseName || "(no name)"}`);
       console.log(`  Published: ${release.publishedAt}`);
       console.log(`  URL:       ${release.htmlUrl}`);
       console.log(`  Notes:     ${release.body?.substring(0, 100) || "(no notes)"}...`);
     } else {
-      console.log("ℹ️  No releases found for this repository");
+      console.log("No releases found for this repository");
     }
   } catch (error) {
-    console.error("❌ Error fetching release:", error);
+    console.error("Error fetching release:", error);
     process.exit(1);
   }
 }
