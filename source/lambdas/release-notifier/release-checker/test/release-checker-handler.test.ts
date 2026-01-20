@@ -290,6 +290,32 @@ describe("Release Checker Handler", () => {
       // Verify return message
       expect(result).toBe("First run: stored initial version v1.0.0");
     });
+
+    it("should treat 'initial' placeholder value as first run", async () => {
+      const mockRelease = createMockRelease({ tagName: "v1.0.0" });
+      mockGitHubService.getLatestRelease.mockResolvedValue(mockRelease);
+      mockVersionStoreService.getLastKnownVersion.mockResolvedValue("initial");
+      mockVersionStoreService.updateVersion.mockResolvedValue(undefined);
+
+      const event = createScheduledEvent();
+      const result = await handler(event, mockContext(testEnv));
+
+      // Verify GitHub service was called
+      expect(mockGitHubService.getLatestRelease).toHaveBeenCalledTimes(1);
+
+      // Verify version was retrieved from store (returned "initial" placeholder)
+      expect(mockVersionStoreService.getLastKnownVersion).toHaveBeenCalledTimes(1);
+
+      // Verify NO notification was published (first run with placeholder)
+      expect(mockReleaseNotificationService.publishReleaseNotification).not.toHaveBeenCalled();
+
+      // Verify version WAS stored (replacing placeholder)
+      expect(mockVersionStoreService.updateVersion).toHaveBeenCalledTimes(1);
+      expect(mockVersionStoreService.updateVersion).toHaveBeenCalledWith("v1.0.0");
+
+      // Verify return message
+      expect(result).toBe("First run: stored initial version v1.0.0");
+    });
   });
 
   describe("No Releases Found", () => {

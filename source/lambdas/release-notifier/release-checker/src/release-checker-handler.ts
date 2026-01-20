@@ -83,8 +83,8 @@ export async function checkForNewRelease(
     currentVersion: latestRelease.tagName,
   });
 
-  // Check if this is the first run (no stored version)
-  if (lastKnownVersion === null) {
+  // Check if this is the first run (no stored version or initial placeholder)
+  if (lastKnownVersion === null || lastKnownVersion === "initial") {
     logger.info("First run detected, storing current version without notification", {
       version: latestRelease.tagName,
     });
