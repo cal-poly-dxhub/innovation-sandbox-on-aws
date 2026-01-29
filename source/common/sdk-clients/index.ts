@@ -20,6 +20,7 @@ import { IsbSSMClient } from "./ssm-client.js";
 import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
 import { S3Client } from "@aws-sdk/client-s3";
 import { SESClient } from "@aws-sdk/client-ses";
+import { SNSClient } from "@aws-sdk/client-sns";
 import {
   AwsCredentialIdentity,
   AwsCredentialIdentityProvider,
@@ -38,6 +39,7 @@ let cachedIdentitystoreClient: IdentitystoreClient | null = null;
 let cachedSSOAdminClient: SSOAdminClient | null = null;
 let cachedCostExplorerClient: CostExplorerClient | null = null;
 let cachedSESClient: SESClient | null = null;
+let cachedSNSClient: SNSClient | null = null;
 let cachedS3Client: S3Client | null = null;
 let cachedCWLogsClient: CloudWatchLogsClient | null = null;
 
@@ -241,6 +243,17 @@ export class IsbClients {
       );
     }
     return cachedSESClient;
+  }
+
+  public static sns(env: { USER_AGENT_EXTRA: string }): SNSClient {
+    if (cachedSNSClient == null) {
+      cachedSNSClient = tracer.captureAWSv3Client(
+        new SNSClient({
+          customUserAgent: env.USER_AGENT_EXTRA,
+        }),
+      );
+    }
+    return cachedSNSClient;
   }
 
   public static s3(env: { USER_AGENT_EXTRA: string }): S3Client {

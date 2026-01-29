@@ -21,6 +21,7 @@ page.
     - [Deployment Prerequisites](#deployment-prerequisites)
     - [Deploy from the AWS Console](#deploy-from-the-aws-console)
     - [Deploy from Source](#deploy-from-source)
+    - [Deploy Release Notifier (Optional)](#deploy-release-notifier-optional)
     - [Post Deployment Tasks](#post-deployment-tasks)
   - [Running Tests](#running-tests)
     - [Unit Tests](#unit-tests)
@@ -106,6 +107,32 @@ npm run deploy:idc
 npm run deploy:data
 npm run deploy:compute
 ```
+
+### Deploy Release Notifier (Optional)
+
+The Release Notifier is an optional standalone stack that monitors the Innovation Sandbox GitHub repository for new releases and sends email notifications. It runs on a daily schedule and is independent of the main solution stacks.
+
+To deploy the Release Notifier:
+
+```shell
+cd source/infrastructure
+npx cdk deploy InnovationSandbox-ReleaseNotifier \
+  --parameters Namespace=<your-namespace> \
+  --parameters GitHubOwner=aws-solutions \
+  --parameters GitHubRepo=innovation-sandbox-on-aws \
+  --parameters NotificationEmail=<your-email>
+```
+
+After deployment, you will receive a subscription confirmation email. You must confirm the subscription to receive release notifications.
+
+To uninstall the Release Notifier:
+
+```shell
+cd source/infrastructure
+npx cdk destroy InnovationSandbox-ReleaseNotifier
+```
+
+For architecture details, see [Release Notifier Architecture](./docs/diagrams/architecture/release-notifier.md).
 
 ### Post Deployment Tasks
 
