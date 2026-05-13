@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { Granularity } from "@aws-sdk/client-cost-explorer";
 import { DateTime } from "luxon";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   AccountsCostReport,
@@ -22,8 +22,10 @@ vi.mock("@amzn/innovation-sandbox-commons/utils/cross-account-roles.js", () => {
 const costExplorerService = IsbServices.costExplorer({
   USER_AGENT_EXTRA: "test-agent",
 });
-beforeEach(() => {
-  vi.restoreAllMocks();
+
+afterEach(() => {
+  vi.resetAllMocks();
+  vi.useRealTimers();
 });
 
 const testAccount1 = "123456789012";
@@ -295,9 +297,8 @@ describe("CostExplorerService", () => {
     });
 
     it("returns costs for accounts all within time period, with batchSize of 1", async () => {
-      const { COST_EXPLORER_CONFIG, CostExplorerService } = await import(
-        "@amzn/innovation-sandbox-commons/isb-services/cost-explorer-service.js"
-      );
+      const { COST_EXPLORER_CONFIG, CostExplorerService } =
+        await import("@amzn/innovation-sandbox-commons/isb-services/cost-explorer-service.js");
       vi.spyOn(
         COST_EXPLORER_CONFIG,
         "MAX_ACCOUNTS_IN_FILTER",

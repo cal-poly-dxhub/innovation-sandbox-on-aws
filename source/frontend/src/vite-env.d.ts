@@ -3,11 +3,4 @@
 
 /// <reference types="vite/client" />
 
-// Needed by vite-plugin-markdown
-declare module "*.md" {
-  const attributes: {
-    title: string;
-  };
-  const markdown: string;
-  export { attributes, markdown };
-}
+declare const SOLUTION_VERSION: string;

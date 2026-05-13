@@ -4,7 +4,6 @@
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig, UserConfig } from "vite";
-import { Mode, plugin } from "vite-plugin-markdown";
 
 export const commonConfig: UserConfig = {
   resolve: {
@@ -16,14 +15,7 @@ export const commonConfig: UserConfig = {
       ),
     },
   },
-  plugins: [react(), plugin({ mode: [Mode.MARKDOWN] })],
-  css: {
-    preprocessorOptions: {
-      scss: {
-        api: "modern-compiler",
-      },
-    },
-  },
+  plugins: [react()],
 };
 
 // https://vitejs.dev/config/
@@ -31,6 +23,7 @@ export default defineConfig({
   ...commonConfig,
   define: {
     global: {},
+    SOLUTION_VERSION: JSON.stringify(process.env.npm_package_version),
   },
   build: {
     chunkSizeWarningLimit: 3000,
