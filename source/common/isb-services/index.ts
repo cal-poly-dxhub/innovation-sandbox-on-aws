@@ -1,11 +1,26 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import {
+  AccountPoolStackConfigStore,
+  SsmAccountPoolStackConfigStore,
+} from "@amzn/innovation-sandbox-commons/data/account-pool-stack-config/ssm-account-pool-stack-config-store.js";
+import { BlueprintStore } from "@amzn/innovation-sandbox-commons/data/blueprint/blueprint-store.js";
+import { DynamoBlueprintStore } from "@amzn/innovation-sandbox-commons/data/blueprint/dynamo-blueprint-store.js";
+import {
+  DataStackConfigStore,
+  SsmDataStackConfigStore,
+} from "@amzn/innovation-sandbox-commons/data/data-stack-config/ssm-data-stack-config-store.js";
+import {
+  IdcStackConfigStore,
+  SsmIdcStackConfigStore,
+} from "@amzn/innovation-sandbox-commons/data/idc-stack-config/ssm-idc-stack-config-store.js";
 import { DynamoLeaseTemplateStore } from "@amzn/innovation-sandbox-commons/data/lease-template/dynamo-lease-template-store.js";
 import { LeaseTemplateStore } from "@amzn/innovation-sandbox-commons/data/lease-template/lease-template-store.js";
 import { DynamoLeaseStore } from "@amzn/innovation-sandbox-commons/data/lease/dynamo-lease-store.js";
 import { LeaseStore } from "@amzn/innovation-sandbox-commons/data/lease/lease-store.js";
 import { DynamoSandboxAccountStore } from "@amzn/innovation-sandbox-commons/data/sandbox-account/dynamo-sandbox-account-store.js";
 import { SandboxAccountStore } from "@amzn/innovation-sandbox-commons/data/sandbox-account/sandbox-account-store.js";
+import { BlueprintDeploymentService } from "@amzn/innovation-sandbox-commons/isb-services/blueprint-deployment-service.js";
 import { CostExplorerService } from "@amzn/innovation-sandbox-commons/isb-services/cost-explorer-service.js";
 import {
   GitHubService,
@@ -52,6 +67,26 @@ export namespace ServiceEnv {
     USER_AGENT_EXTRA: string;
   };
 
+  export type blueprintStore = {
+    BLUEPRINT_TABLE_NAME: string;
+    USER_AGENT_EXTRA: string;
+  };
+
+  export type accountPoolStackConfigStore = {
+    ACCOUNT_POOL_CONFIG_PARAM_ARN: string;
+    USER_AGENT_EXTRA: string;
+  };
+
+  export type dataStackConfigStore = {
+    DATA_CONFIG_PARAM_ARN: string;
+    USER_AGENT_EXTRA: string;
+  };
+
+  export type idcStackConfigStore = {
+    IDC_CONFIG_PARAM_ARN: string;
+    USER_AGENT_EXTRA: string;
+  };
+
   export type isbEventBridge = {
     USER_AGENT_EXTRA: string;
     ISB_EVENT_BUS: string;
@@ -59,14 +94,13 @@ export namespace ServiceEnv {
   };
 
   export type idcService = {
-    ISB_NAMESPACE: string;
+    IDC_CONFIG_PARAM_ARN: string;
     USER_AGENT_EXTRA: string;
   };
 
   export type orgsService = {
-    ISB_NAMESPACE: string;
+    ACCOUNT_POOL_CONFIG_PARAM_ARN: string;
     ACCOUNT_TABLE_NAME: string;
-    SANDBOX_OU_ID: string;
     USER_AGENT_EXTRA: string;
   };
 
@@ -82,6 +116,14 @@ export namespace ServiceEnv {
   } & idcService;
 
   export type logArchivingService = {
+    USER_AGENT_EXTRA: string;
+  };
+
+  export type blueprintDeploymentService = {
+    INTERMEDIATE_ROLE_ARN: string;
+    SANDBOX_ACCOUNT_ROLE_NAME: string;
+    ORG_MGT_ACCOUNT_ID: string;
+    HUB_ACCOUNT_ID: string;
     USER_AGENT_EXTRA: string;
   };
 }
@@ -119,6 +161,40 @@ export class IsbServices {
     });
   }
 
+  public static blueprintStore(env: ServiceEnv.blueprintStore): BlueprintStore {
+    return new DynamoBlueprintStore({
+      client: IsbClients.dynamo(env),
+      blueprintTableName: env.BLUEPRINT_TABLE_NAME,
+    });
+  }
+
+  public static accountPoolStackConfigStore(
+    env: ServiceEnv.accountPoolStackConfigStore,
+  ): AccountPoolStackConfigStore {
+    return new SsmAccountPoolStackConfigStore({
+      parameterArn: env.ACCOUNT_POOL_CONFIG_PARAM_ARN,
+      ssmProvider: IsbClients.ssmProvider(env),
+    });
+  }
+
+  public static dataStackConfigStore(
+    env: ServiceEnv.dataStackConfigStore,
+  ): DataStackConfigStore {
+    return new SsmDataStackConfigStore({
+      parameterArn: env.DATA_CONFIG_PARAM_ARN,
+      ssmProvider: IsbClients.ssmProvider(env),
+    });
+  }
+
+  public static idcStackConfigStore(
+    env: ServiceEnv.idcStackConfigStore,
+  ): IdcStackConfigStore {
+    return new SsmIdcStackConfigStore({
+      parameterArn: env.IDC_CONFIG_PARAM_ARN,
+      ssmProvider: IsbClients.ssmProvider(env),
+    });
+  }
+
   public static isbEventBridge(
     env: ServiceEnv.isbEventBridge,
   ): IsbEventBridgeClient {
@@ -135,8 +211,7 @@ export class IsbServices {
     credentials?: AwsCredentialIdentity | AwsCredentialIdentityProvider,
   ) {
     return new IdcService({
-      namespace: env.ISB_NAMESPACE,
-      ssmClient: IsbClients.ssm(env, credentials),
+      idcStackConfigStore: IsbServices.idcStackConfigStore(env),
       ssoAdminClient: IsbClients.ssoAdmin(env, credentials),
       identityStoreClient: IsbClients.identityStore(env, credentials),
     });
@@ -147,10 +222,9 @@ export class IsbServices {
     credentials?: AwsCredentialIdentity | AwsCredentialIdentityProvider,
   ) {
     return new SandboxOuService({
-      namespace: env.ISB_NAMESPACE,
       sandboxAccountStore: IsbServices.sandboxAccountStore(env),
-      sandboxOuId: env.SANDBOX_OU_ID,
       orgsClient: IsbClients.orgs(env, credentials),
+      accountPoolStackConfigStore: IsbServices.accountPoolStackConfigStore(env),
     });
   }
 
@@ -187,5 +261,16 @@ export class IsbServices {
 
   public static releaseNotificationService(props: ReleaseNotificationServiceProps) {
     return new ReleaseNotificationService(props);
+  }
+
+  public static blueprintDeploymentService(
+    env: ServiceEnv.blueprintDeploymentService,
+  ): BlueprintDeploymentService {
+    return new BlueprintDeploymentService(IsbClients.cloudFormation(env), {
+      INTERMEDIATE_ROLE_ARN: env.INTERMEDIATE_ROLE_ARN,
+      SANDBOX_ACCOUNT_ROLE_NAME: env.SANDBOX_ACCOUNT_ROLE_NAME,
+      ORG_MGT_ACCOUNT_ID: env.ORG_MGT_ACCOUNT_ID,
+      HUB_ACCOUNT_ID: env.HUB_ACCOUNT_ID,
+    });
   }
 }

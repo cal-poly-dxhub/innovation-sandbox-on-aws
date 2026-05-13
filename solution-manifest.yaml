@@ -1,6 +1,6 @@
 id: SO0284
 name: innovation-sandbox-on-aws
-version: v1.1.0
+version: v1.2.8
 cloudformation_templates:
   - template: InnovationSandbox-AccountPool.template
     main_template: true
@@ -11,3 +11,4 @@ build_environment:
   build_image: aws/codebuild/standard:7.0
 container_images:
   - innovation-sandbox-on-aws-account-cleaner
+auto_create_github_pr: true

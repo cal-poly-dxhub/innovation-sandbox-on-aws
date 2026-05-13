@@ -90,7 +90,7 @@ set -- "${POSITIONAL_ARGS[@]}" # restore positional parameters
 # Get reference for all important folders
 root_dir="$(get_root_dir)"
 deployment_dir="$root_dir/deployment"
-cdk_out_dir="$root_dir/.build/cdk.out"
+cdk_out_dir="$root_dir/source/infrastructure/cdk.out"
 global_assets_dir="$deployment_dir/global-s3-assets"
 regional_assets_dir="$deployment_dir/regional-s3-assets"
 ecr_dir="$deployment_dir/ecr"
@@ -161,8 +161,13 @@ rsync "$cdk_out_dir"/asset.* "$regional_assets_dir"
 print_step "Preparing Container Images"
 find "$root_dir/source" -name Dockerfile | while read file; do
     parent_dir="$(basename "$(dirname "$file")")"
+    source_dir="$(dirname "$file")"
     mkdir -p "$ecr_dir/$SOLUTION_NAME-$parent_dir"
     cp "$file" "$ecr_dir/$SOLUTION_NAME-$parent_dir/Dockerfile"
+    # Copy patches directory if it exists alongside the Dockerfile
+    if [ -d "$source_dir/patches" ]; then
+        cp -r "$source_dir/patches" "$ecr_dir/$SOLUTION_NAME-$parent_dir/patches"
+    fi
 done
 
 print_final_success "S3 distribution build completed successfully!"

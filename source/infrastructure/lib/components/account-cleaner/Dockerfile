@@ -1,15 +1,45 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal@sha256:d6bc771073bf2956ec42fcd0f41c2dedde258096571b690f8dc3b38174736c03
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
-RUN dnf install -y tar gzip awscli jq sed
+# To update: docker manifest inspect public.ecr.aws/amazonlinux/amazonlinux:2023-minimal | jq -r '.manifests[] | select(.platform.architecture=="amd64") | .digest'
+ARG BASE_IMAGE_DIGEST=sha256:af0ef261b8d79950331623cda17f56e12ae976ad27f6fa105441da8fdc992d66
 
-ADD https://github.com/ekristen/aws-nuke/releases/download/v3.60.1/aws-nuke-v3.60.1-linux-amd64.tar.gz nuke-binary.tar.gz
+# Build aws-nuke from source
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal@${BASE_IMAGE_DIGEST} AS builder
 
-RUN mkdir /tmp/aws-nuke && \
-    tar -xzvf nuke-binary.tar.gz -C /tmp/aws-nuke && \
-    mv /tmp/aws-nuke/aws-nuke /usr/local/bin/aws-nuke && \
-    chmod +x /usr/local/bin/aws-nuke && \
-    rm -rf /tmp/aws-nuke && \
-    rm nuke-binary.tar.gz
+ARG AWS_NUKE_VERSION=v3.64.1
+# To update: curl -sL https://github.com/ekristen/aws-nuke/archive/refs/tags/vX.Y.Z.tar.gz | shasum -a 256 | awk '{print $1}'
+ARG AWS_NUKE_SOURCE_SHA256=23c28fd84afdf16eb69725055dce59cb1581d0ba38e07c5ba6bbd431e0b98ba9
+
+RUN dnf install -y tar gzip golang patch
+
+ADD https://github.com/ekristen/aws-nuke/archive/refs/tags/${AWS_NUKE_VERSION}.tar.gz /tmp/aws-nuke-src.tar.gz
+RUN echo "${AWS_NUKE_SOURCE_SHA256}  /tmp/aws-nuke-src.tar.gz" | sha256sum -c - && \
+    mkdir -p /tmp/aws-nuke-src && \
+    tar -xzf /tmp/aws-nuke-src.tar.gz -C /tmp/aws-nuke-src --strip-components=1
+
+COPY patches/ /tmp/patches/
+RUN cd /tmp/aws-nuke-src && \
+    found=false && \
+    for p in /tmp/patches/*.patch; do \
+      [ -f "$p" ] || continue; \
+      echo "Applying patch: $(basename "$p")" && \
+      patch -p1 < "$p" || exit 1; \
+      found=true; \
+    done && \
+    if [ "$found" = true ]; then echo "All patches applied successfully"; \
+    else echo "No patches to apply"; fi
+
+RUN cd /tmp/aws-nuke-src && \
+    GOTOOLCHAIN=local CGO_ENABLED=0 go build -o /usr/local/bin/aws-nuke .
+
+# Runtime image
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal@${BASE_IMAGE_DIGEST}
+
+RUN dnf install -y awscli jq sed
+
+COPY --from=builder /usr/local/bin/aws-nuke /usr/local/bin/aws-nuke
+RUN chmod +x /usr/local/bin/aws-nuke
 
 ENV PATH=$PATH:/usr/local/bin
 

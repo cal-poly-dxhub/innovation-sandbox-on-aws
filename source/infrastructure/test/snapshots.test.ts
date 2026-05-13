@@ -57,6 +57,10 @@ function normalizeNonDeterministicTemplate(template: Template) {
   return templateJson;
 }
 
+function toFullDepthSnapshot(templateJson: Record<string, any>): string {
+  return JSON.stringify(templateJson, null, 2);
+}
+
 beforeAll(async () => {
   vi.spyOn(Code, "fromAsset").mockImplementation(() => {
     const mockCode = new AssetCode("/mock/path");
@@ -114,7 +118,7 @@ describe("IsbComputeStack Snapshot", () => {
     const stack = new IsbComputeStack(app, "IsbComputeStack");
     const template = Template.fromStack(stack);
     const templateJson = normalizeNonDeterministicTemplate(template);
-    expect(templateJson).toMatchSnapshot();
+    expect(toFullDepthSnapshot(templateJson)).toMatchSnapshot();
   });
 });
 
@@ -125,7 +129,7 @@ describe("IsbDataStack Snapshot", () => {
     const template = Template.fromStack(stack);
     const templateJson = normalizeNonDeterministicTemplate(template);
 
-    expect(templateJson).toMatchSnapshot();
+    expect(toFullDepthSnapshot(templateJson)).toMatchSnapshot();
   });
 });
 
@@ -136,7 +140,7 @@ describe("IsbAccountPoolStack Snapshot", () => {
     const template = Template.fromStack(stack);
     const templateJson = normalizeNonDeterministicTemplate(template);
 
-    expect(templateJson).toMatchSnapshot();
+    expect(toFullDepthSnapshot(templateJson)).toMatchSnapshot();
   });
 });
 
@@ -147,7 +151,7 @@ describe("IdcStack Snapshot", () => {
     const template = Template.fromStack(stack);
     const templateJson = normalizeNonDeterministicTemplate(template);
 
-    expect(templateJson).toMatchSnapshot();
+    expect(toFullDepthSnapshot(templateJson)).toMatchSnapshot();
   });
 });
 
@@ -158,6 +162,6 @@ describe("SandboxAccountStack Snapshot", () => {
     const template = Template.fromStack(stack);
     const templateJson = normalizeNonDeterministicTemplate(template);
 
-    expect(templateJson).toMatchSnapshot();
+    expect(toFullDepthSnapshot(templateJson)).toMatchSnapshot();
   });
 });

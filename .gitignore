@@ -1,16 +1,14 @@
-.kiro/
 *.js
 !jest.config.js
 *.d.ts
 !vite-env.d.ts
 node_modules/
-!source/.typescript/lambda/**/*.js
-!source/lambda/**/*.js
-dist
+dist/
+coverage/
 bom.json
 .env
-git-info
 build
+git-info
 *.tsbuildinfo
 
 # CDK asset staging directory
@@ -27,8 +25,12 @@ staging/
 tmp/
 temp/
 .temp_*/
-.build
 .test-reports
+scratch/
+
+# Kiro
+.kiro/specs/
+.kiro/reviews/
 
 ### VisualStudioCode ###
 .vscode
@@ -37,5 +39,3 @@ temp/
 .DS_Store
 
 .idea
-
-**/coverage

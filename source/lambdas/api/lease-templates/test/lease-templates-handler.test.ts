@@ -10,6 +10,7 @@ import {
   vi,
 } from "vitest";
 
+import { DynamoBlueprintStore } from "@amzn/innovation-sandbox-commons/data/blueprint/dynamo-blueprint-store.js";
 import { UnknownItem } from "@amzn/innovation-sandbox-commons/data/errors.js";
 import { GlobalConfigSchema } from "@amzn/innovation-sandbox-commons/data/global-config/global-config.js";
 import { DynamoLeaseTemplateStore } from "@amzn/innovation-sandbox-commons/data/lease-template/dynamo-lease-template-store.js";
@@ -32,13 +33,19 @@ import {
   bulkStubEnv,
   mockAppConfigMiddleware,
 } from "@amzn/innovation-sandbox-commons/test/lambdas/utils.js";
+import {
+  GetSecretValueCommand,
+  SecretsManagerClient,
+} from "@aws-sdk/client-secrets-manager";
+import { mockClient } from "aws-sdk-client-mock";
 import { randomUUID } from "crypto";
 
 const mockUuid = "00000000-0000-0000-0000-000000000000";
 vi.mock("uuid", () => ({
-  v4: vi.fn(() => mockUuid),
+  v4: vi.fn().mockReturnValue(mockUuid),
 }));
 
+const secretsManagerMock = mockClient(SecretsManagerClient);
 const testEnv = generateSchemaData(LeaseTemplateLambdaEnvironmentSchema);
 const mockedGlobalConfig = {
   ...generateSchemaData(GlobalConfigSchema),
@@ -67,20 +74,24 @@ beforeAll(async () => {
   bulkStubEnv(testEnv);
 
   handler = (
-    await import(
-      "@amzn/innovation-sandbox-lease-templates/lease-templates-handler.js"
-    )
+    await import("@amzn/innovation-sandbox-lease-templates/lease-templates-handler.js")
   ).handler;
 });
 
 beforeEach(() => {
   bulkStubEnv(testEnv);
   mockAppConfigMiddleware(mockedGlobalConfig, mockedReportingConfig);
+
+  // Mock Secrets Manager to return JWT secret
+  secretsManagerMock.on(GetSecretValueCommand).resolves({
+    SecretString: "testSecret",
+  });
 });
 
 afterEach(() => {
   vi.resetAllMocks();
   vi.unstubAllEnvs();
+  secretsManagerMock.reset();
 });
 
 describe("handler", async () => {
@@ -446,8 +457,17 @@ describe("handler", async () => {
   describe("POST /leaseTemplates", () => {
     it("should return 201 response when leaseTemplate is created successfully", async () => {
       const leaseTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
-        { maxSpend: 50, leaseDurationInHours: 24, costReportGroup: undefined },
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId: undefined,
+        },
       );
       const event = createAPIGatewayProxyEvent({
         httpMethod: "POST",
@@ -525,7 +545,8 @@ describe("handler", async () => {
       ).toEqual({
         statusCode: 415,
         body: createFailureResponseBody({
-          message: "Invalid or malformed JSON was provided.",
+          message:
+            "Invalid JSON in request body. Please check your JSON syntax.",
         }),
         headers: responseHeaders,
       });
@@ -534,6 +555,7 @@ describe("handler", async () => {
       const leaseTemplate = generateSchemaData(LeaseTemplateSchema, {
         uuid: undefined,
         name: undefined,
+        blueprintName: undefined,
         maxSpend: 50,
         leaseDurationInHours: 24,
       });
@@ -590,7 +612,11 @@ describe("handler", async () => {
       `should return 400 when lease template values exceed global configuration: $expectedErrorMessage`,
       async ({ maxSpend, leaseDurationInHours, expectedErrorMessage }) => {
         const leaseTemplate = generateSchemaData(
-          LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
+          LeaseTemplateSchema.omit({
+            uuid: true,
+            createdBy: true,
+            blueprintName: true,
+          }),
           {
             maxSpend,
             leaseDurationInHours,
@@ -624,10 +650,11 @@ describe("handler", async () => {
       {
         costReportGroup: "invalid-group",
         reportingConfig: testReportingConfig,
-        expectedError: "Cost report group: invalid-group is not valid",
+        expectedError: "Invalid cost report group",
       },
       {
         costReportGroup: undefined,
+        blueprintId: undefined,
         reportingConfig: testReportingConfigRequired,
         expectedError:
           "A cost report group must be provided as required by administrator settings. Please contact your administrator if you need to create a lease without specifying a cost report group.",
@@ -638,7 +665,11 @@ describe("handler", async () => {
         mockAppConfigMiddleware(mockedGlobalConfig, reportingConfig);
 
         const leaseTemplate = generateSchemaData(
-          LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
+          LeaseTemplateSchema.omit({
+            uuid: true,
+            createdBy: true,
+            blueprintName: true,
+          }),
           {
             maxSpend: 50,
             leaseDurationInHours: 24,
@@ -701,7 +732,11 @@ describe("handler", async () => {
         mockAppConfigMiddleware(mockedGlobalConfig, mockedReportingConfig);
 
         const leaseTemplate = generateSchemaData(
-          LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
+          LeaseTemplateSchema.omit({
+            uuid: true,
+            createdBy: true,
+            blueprintName: true,
+          }),
           {
             maxSpend,
             leaseDurationInHours,
@@ -733,12 +768,17 @@ describe("handler", async () => {
 
     it("should return 200 and create lease template with PUBLIC visibility", async () => {
       const leaseTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           visibility: "PUBLIC",
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
 
@@ -779,12 +819,17 @@ describe("handler", async () => {
 
     it("should create lease template with PRIVATE visibility", async () => {
       const leaseTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           visibility: "PRIVATE",
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
 
@@ -829,11 +874,13 @@ describe("handler", async () => {
           uuid: true,
           createdBy: true,
           visibility: true,
+          blueprintName: true,
         }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
 
@@ -875,8 +922,17 @@ describe("handler", async () => {
 
     it("should return 500 response when db call throws unexpected error", async () => {
       const leaseTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true, createdBy: true }),
-        { maxSpend: 50, leaseDurationInHours: 24, costReportGroup: undefined },
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId: undefined,
+        },
       );
 
       const event = createAPIGatewayProxyEvent({
@@ -905,6 +961,153 @@ describe("handler", async () => {
         body: createErrorResponseBody("An unexpected error occurred."),
         headers: responseHeaders,
       });
+    });
+
+    it("should resolve blueprintName when blueprintId is provided", async () => {
+      const blueprintId = "550e8400-e29b-41d4-a716-446655440000";
+      const leaseTemplate = generateSchemaData(
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId,
+        },
+      );
+
+      vi.spyOn(DynamoBlueprintStore.prototype, "get").mockResolvedValue({
+        result: {
+          blueprint: { name: "Resolved-Blueprint" },
+          stackSets: [],
+        },
+      } as any);
+
+      const createSpy = vi
+        .spyOn(DynamoLeaseTemplateStore.prototype, "create")
+        .mockResolvedValue({
+          ...leaseTemplate,
+          uuid: mockUuid,
+          createdBy: isbAuthorizedUser.user.email,
+          blueprintName: "Resolved-Blueprint",
+        });
+
+      const event = createAPIGatewayProxyEvent({
+        httpMethod: "POST",
+        path: "/leaseTemplates",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${isbAuthorizedUser.token}`,
+        },
+        body: JSON.stringify(leaseTemplate),
+      });
+
+      const response = await handler(
+        event,
+        mockAuthorizedContext(testEnv, mockedGlobalConfig),
+      );
+
+      expect(response.statusCode).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blueprintId,
+          blueprintName: "Resolved-Blueprint",
+        }),
+      );
+    });
+
+    it("should return 400 when blueprintId references non-existent blueprint", async () => {
+      const leaseTemplate = generateSchemaData(
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId: "550e8400-e29b-41d4-a716-446655440000",
+        },
+      );
+
+      vi.spyOn(DynamoBlueprintStore.prototype, "get").mockResolvedValue({
+        result: undefined,
+      } as any);
+
+      const event = createAPIGatewayProxyEvent({
+        httpMethod: "POST",
+        path: "/leaseTemplates",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${isbAuthorizedUser.token}`,
+        },
+        body: JSON.stringify(leaseTemplate),
+      });
+
+      expect(
+        await handler(
+          event,
+          mockAuthorizedContext(testEnv, mockedGlobalConfig),
+        ),
+      ).toEqual({
+        statusCode: 400,
+        body: createFailureResponseBody({
+          message: "Referenced blueprint not found.",
+        }),
+        headers: responseHeaders,
+      });
+    });
+
+    it("should set blueprintName to null when no blueprintId is provided", async () => {
+      const leaseTemplate = generateSchemaData(
+        LeaseTemplateSchema.omit({
+          uuid: true,
+          createdBy: true,
+          blueprintName: true,
+        }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId: undefined,
+        },
+      );
+
+      const createSpy = vi
+        .spyOn(DynamoLeaseTemplateStore.prototype, "create")
+        .mockResolvedValue({
+          ...leaseTemplate,
+          uuid: mockUuid,
+          createdBy: isbAuthorizedUser.user.email,
+          blueprintName: null,
+        });
+
+      const event = createAPIGatewayProxyEvent({
+        httpMethod: "POST",
+        path: "/leaseTemplates",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${isbAuthorizedUser.token}`,
+        },
+        body: JSON.stringify(leaseTemplate),
+      });
+
+      const response = await handler(
+        event,
+        mockAuthorizedContext(testEnv, mockedGlobalConfig),
+      );
+
+      expect(response.statusCode).toBe(201);
+      expect(createSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blueprintName: null,
+        }),
+      );
+      expect(DynamoBlueprintStore.prototype.get).not.toHaveBeenCalled();
     });
   });
 
@@ -1115,11 +1318,12 @@ describe("handler", async () => {
     it("should return 200 response with updated data", async () => {
       const oldLeaseTemplate = generateSchemaData(LeaseTemplateSchema);
       const newLeaseTemplateJsonBody = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true }),
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
       const event = createAPIGatewayProxyEvent({
@@ -1216,13 +1420,15 @@ describe("handler", async () => {
       ).toEqual({
         statusCode: 415,
         body: createFailureResponseBody({
-          message: "Invalid or malformed JSON was provided.",
+          message:
+            "Invalid JSON in request body. Please check your JSON syntax.",
         }),
         headers: responseHeaders,
       });
     });
     it("should return 400 response when body is malformed", async () => {
       const leaseTemplate = generateSchemaData(LeaseTemplateSchema, {
+        blueprintName: undefined,
         maxSpend: 50,
         leaseDurationInHours: 24,
       });
@@ -1279,7 +1485,7 @@ describe("handler", async () => {
       `should return 400 when lease template values exceed global configuration: $expectedErrorMessage`,
       async ({ maxSpend, leaseDurationInHours, expectedErrorMessage }) => {
         const leaseTemplate = generateSchemaData(
-          LeaseTemplateSchema.omit({ uuid: true }),
+          LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
           {
             maxSpend,
             leaseDurationInHours,
@@ -1316,10 +1522,11 @@ describe("handler", async () => {
       {
         costReportGroup: "invalid-group",
         reportingConfig: testReportingConfig,
-        expectedError: "Cost report group: invalid-group is not valid",
+        expectedError: "Invalid cost report group",
       },
       {
         costReportGroup: undefined,
+        blueprintId: undefined,
         reportingConfig: testReportingConfigRequired,
         expectedError:
           "A cost report group must be provided as required by administrator settings. Please contact your administrator if you need to create a lease without specifying a cost report group.",
@@ -1330,7 +1537,7 @@ describe("handler", async () => {
         mockAppConfigMiddleware(mockedGlobalConfig, reportingConfig);
 
         const leaseTemplate = generateSchemaData(
-          LeaseTemplateSchema.omit({ uuid: true }),
+          LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
           {
             maxSpend: 50,
             leaseDurationInHours: 24,
@@ -1396,7 +1603,7 @@ describe("handler", async () => {
         mockAppConfigMiddleware(mockedGlobalConfig, mockedReportingConfig);
 
         const leaseTemplate = generateSchemaData(
-          LeaseTemplateSchema.omit({ uuid: true }),
+          LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
           {
             maxSpend,
             leaseDurationInHours,
@@ -1431,11 +1638,12 @@ describe("handler", async () => {
 
     it("should return 500 response when db call throws unexpected error", async () => {
       const leaseTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true }),
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
       const event = createAPIGatewayProxyEvent({
@@ -1475,12 +1683,13 @@ describe("handler", async () => {
       });
 
       const updatedTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true }),
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           visibility: "PRIVATE",
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
 
@@ -1528,12 +1737,13 @@ describe("handler", async () => {
       });
 
       const updatedTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true }),
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           visibility: "PUBLIC",
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
 
@@ -1577,11 +1787,12 @@ describe("handler", async () => {
 
     it("should return 404 response when item doesn't exist", async () => {
       const leaseTemplate = generateSchemaData(
-        LeaseTemplateSchema.omit({ uuid: true }),
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
         {
           maxSpend: 50,
           leaseDurationInHours: 24,
           costReportGroup: undefined,
+          blueprintId: undefined,
         },
       );
       const event = createAPIGatewayProxyEvent({
@@ -1612,6 +1823,101 @@ describe("handler", async () => {
         statusCode: 404,
         body: createFailureResponseBody({
           message: "Lease Template not found.",
+        }),
+        headers: responseHeaders,
+      });
+    });
+
+    it("should resolve blueprintName when blueprintId is provided on update", async () => {
+      const blueprintId = "550e8400-e29b-41d4-a716-446655440000";
+      const leaseTemplate = generateSchemaData(
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId,
+        },
+      );
+
+      vi.spyOn(DynamoBlueprintStore.prototype, "get").mockResolvedValue({
+        result: {
+          blueprint: { name: "Resolved-Blueprint" },
+          stackSets: [],
+        },
+      } as any);
+
+      const updateSpy = vi
+        .spyOn(DynamoLeaseTemplateStore.prototype, "update")
+        .mockResolvedValue({
+          oldItem: generateSchemaData(LeaseTemplateSchema),
+          newItem: {
+            ...leaseTemplate,
+            uuid: mockUuid,
+            blueprintName: "Resolved-Blueprint",
+          },
+        });
+
+      const event = createAPIGatewayProxyEvent({
+        httpMethod: "PUT",
+        path: "/leaseTemplates/{leaseTemplateId}",
+        pathParameters: { leaseTemplateId: mockUuid },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${isbAuthorizedUser.token}`,
+        },
+        body: JSON.stringify(leaseTemplate),
+      });
+
+      const response = await handler(
+        event,
+        mockAuthorizedContext(testEnv, mockedGlobalConfig),
+      );
+
+      expect(response.statusCode).toBe(200);
+      expect(updateSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          blueprintId,
+          blueprintName: "Resolved-Blueprint",
+        }),
+      );
+    });
+
+    it("should return 400 when blueprintId references non-existent blueprint on update", async () => {
+      const leaseTemplate = generateSchemaData(
+        LeaseTemplateSchema.omit({ uuid: true, blueprintName: true }),
+        {
+          maxSpend: 50,
+          leaseDurationInHours: 24,
+          costReportGroup: undefined,
+          blueprintId: "550e8400-e29b-41d4-a716-446655440000",
+        },
+      );
+
+      vi.spyOn(DynamoBlueprintStore.prototype, "get").mockResolvedValue({
+        result: undefined,
+      } as any);
+
+      const event = createAPIGatewayProxyEvent({
+        httpMethod: "PUT",
+        path: "/leaseTemplates/{leaseTemplateId}",
+        pathParameters: { leaseTemplateId: mockUuid },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${isbAuthorizedUser.token}`,
+        },
+        body: JSON.stringify(leaseTemplate),
+      });
+
+      expect(
+        await handler(
+          event,
+          mockAuthorizedContext(testEnv, mockedGlobalConfig),
+        ),
+      ).toEqual({
+        statusCode: 400,
+        body: createFailureResponseBody({
+          message: "Referenced blueprint not found.",
         }),
         headers: responseHeaders,
       });

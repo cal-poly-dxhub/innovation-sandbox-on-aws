@@ -1,35 +1,34 @@
 // Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: Apache-2.0
+import { SecretsProvider } from "@aws-lambda-powertools/parameters/secrets";
+import { SSMProvider } from "@aws-lambda-powertools/parameters/ssm";
+import { Tracer } from "@aws-lambda-powertools/tracer";
 import { AppConfigClient } from "@aws-sdk/client-appconfig";
 import { AppConfigDataClient } from "@aws-sdk/client-appconfigdata";
+import { CloudFormationClient } from "@aws-sdk/client-cloudformation";
+import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
 import { CostExplorerClient } from "@aws-sdk/client-cost-explorer";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { EC2Client } from "@aws-sdk/client-ec2";
 import { IdentitystoreClient } from "@aws-sdk/client-identitystore";
 import { OrganizationsClient } from "@aws-sdk/client-organizations";
+import { S3Client } from "@aws-sdk/client-s3";
+import { SESClient } from "@aws-sdk/client-ses";
+import { SNSClient } from "@aws-sdk/client-sns";
 import { SFNClient } from "@aws-sdk/client-sfn";
 import { SSOAdminClient } from "@aws-sdk/client-sso-admin";
 import { STSClient } from "@aws-sdk/client-sts";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-
-import { Tracer } from "@aws-lambda-powertools/tracer";
-import { IsbEventBridgeClient } from "./event-bridge-client.js";
-import { IsbSecretsManagerClient } from "./secrets-manager-client.js";
-import { IsbSSMClient } from "./ssm-client.js";
-
-import { CloudWatchLogsClient } from "@aws-sdk/client-cloudwatch-logs";
-import { S3Client } from "@aws-sdk/client-s3";
-import { SESClient } from "@aws-sdk/client-ses";
-import { SNSClient } from "@aws-sdk/client-sns";
 import {
   AwsCredentialIdentity,
   AwsCredentialIdentityProvider,
 } from "@aws-sdk/types";
+import { IsbEventBridgeClient } from "./event-bridge-client.js";
+import { IsbSecretsManagerClient } from "./secrets-manager-client.js";
 
 let cachedDynamoClient: DynamoDBDocumentClient | null = null;
 let cachedSecretsManagerClient: IsbSecretsManagerClient | null = null;
 let cachedStepFunctionsClient: SFNClient | null = null;
-let cachedSSMClient: IsbSSMClient | null = null;
 let cachedEC2Client: EC2Client | null = null;
 let cachedSTSClient: STSClient | null = null;
 let cachedAppConfigClient: AppConfigClient | null = null;
@@ -42,6 +41,9 @@ let cachedSESClient: SESClient | null = null;
 let cachedSNSClient: SNSClient | null = null;
 let cachedS3Client: S3Client | null = null;
 let cachedCWLogsClient: CloudWatchLogsClient | null = null;
+let cachedCloudFormationClient: CloudFormationClient | null = null;
+let cachedSSMProvider: SSMProvider | null = null;
+let cachedSecretsProvider: SecretsProvider | null = null;
 
 const tracer = new Tracer();
 
@@ -109,21 +111,6 @@ export class IsbClients {
       );
     }
     return cachedStepFunctionsClient;
-  }
-
-  public static ssm(
-    env: { USER_AGENT_EXTRA: string },
-    credentials?: AwsCredentialIdentity | AwsCredentialIdentityProvider,
-  ): IsbSSMClient {
-    if (cachedSSMClient == null) {
-      cachedSSMClient = tracer.captureAWSv3Client(
-        new IsbSSMClient({
-          customUserAgent: env.USER_AGENT_EXTRA,
-          credentials,
-        }),
-      );
-    }
-    return cachedSSMClient;
   }
 
   public static ec2(env: { USER_AGENT_EXTRA: string }): EC2Client {
@@ -278,5 +265,42 @@ export class IsbClients {
       );
     }
     return cachedCWLogsClient;
+  }
+
+  public static cloudFormation(env: {
+    USER_AGENT_EXTRA: string;
+  }): CloudFormationClient {
+    if (cachedCloudFormationClient == null) {
+      cachedCloudFormationClient = tracer.captureAWSv3Client(
+        new CloudFormationClient({
+          customUserAgent: env.USER_AGENT_EXTRA,
+        }),
+      );
+    }
+    return cachedCloudFormationClient;
+  }
+
+  public static ssmProvider(env: { USER_AGENT_EXTRA: string }): SSMProvider {
+    if (cachedSSMProvider == null) {
+      cachedSSMProvider = new SSMProvider({
+        clientConfig: {
+          customUserAgent: env.USER_AGENT_EXTRA,
+        },
+      });
+    }
+    return cachedSSMProvider;
+  }
+
+  public static secretsProvider(env: {
+    USER_AGENT_EXTRA: string;
+  }): SecretsProvider {
+    if (cachedSecretsProvider == null) {
+      cachedSecretsProvider = new SecretsProvider({
+        clientConfig: {
+          customUserAgent: env.USER_AGENT_EXTRA,
+        },
+      });
+    }
+    return cachedSecretsProvider;
   }
 }

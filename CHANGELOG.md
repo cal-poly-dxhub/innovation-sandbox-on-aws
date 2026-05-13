@@ -5,6 +5,213 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.8] - 2026-05-08
+
+### Fixed
+
+- Allow lease termination and freeze when user is deleted from IDC
+
+### Security
+
+- Updated amazonlinux base image digest to mitigate:
+  - [CVE-2026-4046](https://nvd.nist.gov/vuln/detail/CVE-2026-4046) (glibc, glibc-common, glibc-minimal-langpack)
+  - [CVE-2026-4786](https://nvd.nist.gov/vuln/detail/CVE-2026-4786) (python3, python3-libs, python-unversioned-command)
+  - [CVE-2026-6100](https://nvd.nist.gov/vuln/detail/CVE-2026-6100) (python3, python3-libs, python-unversioned-command)
+
+## [1.2.7] - 2026-04-27
+
+### Security
+
+- Upgraded `@xmldom/xmldom` to mitigate:
+  - [CVE-2026-41672](https://github.com/advisories/GHSA-j759-j44w-7fr8)
+  - [CVE-2026-41673](https://github.com/advisories/GHSA-2v35-w6hq-6mfw)
+  - [CVE-2026-41674](https://github.com/advisories/GHSA-f6ww-3ggp-fr8h)
+  - [CVE-2026-41675](https://github.com/advisories/GHSA-x6wf-f3px-wcqx)
+- Upgraded `fast-xml-parser` to mitigate [CVE-2026-41650](https://github.com/advisories/GHSA-gh4j-gqv2-49f6)
+
+## [1.2.6] - 2026-04-17
+
+### Security
+
+- Upgraded `libnghttp2` to mitigate [CVE-2026-27135](https://nvd.nist.gov/vuln/detail/CVE-2026-27135)
+- Upgraded `openssl-fips-provider-latest` to mitigate:
+  - [CVE-2026-28387](https://nvd.nist.gov/vuln/detail/CVE-2026-28387)
+  - [CVE-2026-31790](https://nvd.nist.gov/vuln/detail/CVE-2026-31790)
+- Upgraded `openssl-libs` to mitigate:
+  - [CVE-2026-28387](https://nvd.nist.gov/vuln/detail/CVE-2026-28387)
+  - [CVE-2026-31790](https://nvd.nist.gov/vuln/detail/CVE-2026-31790)
+- Upgraded `python-unversioned-command` to mitigate [CVE-2026-4519](https://nvd.nist.gov/vuln/detail/CVE-2026-4519)
+- Upgraded `python3` to mitigate [CVE-2026-4519](https://nvd.nist.gov/vuln/detail/CVE-2026-4519)
+- Upgraded `python3-libs` to mitigate [CVE-2026-4519](https://nvd.nist.gov/vuln/detail/CVE-2026-4519)
+
+## [1.2.5] - 2026-04-10
+
+### Security
+
+- Upgraded `vite` to mitigate:
+  - [CVE-2026-39364](https://nvd.nist.gov/vuln/detail/CVE-2026-39364)
+  - [CVE-2026-39363](https://nvd.nist.gov/vuln/detail/CVE-2026-39363)
+  - [CVE-2026-39365](https://nvd.nist.gov/vuln/detail/CVE-2026-39365)
+- Updated amazonlinux base image digest
+
+## [1.2.4] - 2026-04-02
+
+### Security
+
+- Upgraded `aws-nuke` to mitigate:
+  - [CVE-2026-25679](https://nvd.nist.gov/vuln/detail/CVE-2026-25679)
+  - [CVE-2026-27137](https://nvd.nist.gov/vuln/detail/CVE-2026-27137)
+- Upgraded `path-to-regexp` to mitigate:
+  - [CVE-2026-4867](https://nvd.nist.gov/vuln/detail/CVE-2026-4867)
+  - [CVE-2026-4926](https://nvd.nist.gov/vuln/detail/CVE-2026-4926)
+- Upgraded `lodash` to mitigate [CVE-2026-4800](https://nvd.nist.gov/vuln/detail/CVE-2026-4800)
+
+## [1.2.3] - 2026-03-26
+
+### Security
+
+- Upgraded `flatted` to mitigate [CVE-2026-33228](https://nvd.nist.gov/vuln/detail/CVE-2026-33228)
+- Upgraded `fast-xml-parser` to mitigate [CVE-2026-33349](https://nvd.nist.gov/vuln/detail/CVE-2026-33349)
+
+## [1.2.2] - 2026-03-19
+
+### Security
+
+- Upgraded `flatted` to mitigate [CVE-2026-32141](https://nvd.nist.gov/vuln/detail/CVE-2026-32141)
+- Updated `fast-xml-parser` to address [CVE-2026-26278](https://github.com/advisories/GHSA-jmr7-xgp7-cmfj)
+
+## [1.2.1] - 2026-03-05
+
+### Security
+
+- Upgraded `aws-nuke` to mitigate [CVE-2025-68121](https://nvd.nist.gov/vuln/detail/CVE-2025-68121)
+- Upgraded `minimatch` to mitigate:
+  - [CVE-2026-27903](https://nvd.nist.gov/vuln/detail/CVE-2026-27903)
+  - [CVE-2026-27904](https://nvd.nist.gov/vuln/detail/CVE-2026-27904)
+- Upgraded `serialize-javascript` to mitigate [GHSA-5c6j-r48x-rmvq](https://github.com/advisories/GHSA-5c6j-r48x-rmvq)
+- Upgraded `fast-xml-parser` to mitigate [CVE-2026-27942](https://nvd.nist.gov/vuln/detail/CVE-2026-27942)
+
+## [1.2.0] - 2026-02-25
+
+### Added
+
+- Blueprint management for registering, configuring, and tracking CloudFormation StackSets as reusable infrastructure templates ([#34](https://github.com/aws-solutions/innovation-sandbox-on-aws/issues/34))
+  - Configurable deployment strategies with region targeting, concurrency controls, and failure tolerance
+  - Automated blueprint deployment to sandbox accounts during lease provisioning, orchestrated through AWS Step Functions
+  - `Provisioning` and `ProvisioningFailed` lease statuses to track blueprint deployment progress during lease approval
+  - Deployment history per blueprint with health metrics (successful deployments, deployment history, last deployment time)
+  - Blueprint management UI with registration wizard, detail view, deployment history visualization, and editing for basic details and deployment configuration
+  - Blueprint association on lease templates, allowing administrators to attach or detach blueprints during template creation or update
+- Dedicated detail and edit pages for leases and lease templates covering duration, budget, cost report, and blueprint settings
+- Version update alert in the navigation bar when a newer version of the solution is available ([#45](https://github.com/aws-solutions/innovation-sandbox-on-aws/issues/45))
+- AWS WAF logging to Amazon CloudWatch Logs and alarm on blocked requests
+- Validation that the `InnovationSandbox-<namespace>-SandboxAccountRole` role exists in a sandbox account before starting cleanup, reducing unnecessary cleanup attempts
+
+### Fixed
+
+- Sorting on date and status columns in frontend tables by adding dedicated sorting comparators
+- Cross-stack reference issue where updates to the account pool stack were not reflected in the compute stack due to deploy-time resolution
+
+### Changed
+
+- Lease approval workflow now supports two paths: immediate access (no blueprint) or deferred access after blueprint deployment completes
+- Miscellaneous UX improvements to the frontend application
+
+### Security
+
+- Added JWT signature verification at Lambda middleware layer to prevent authentication bypass when API Gateway is bypassed ([#93](https://github.com/aws-solutions/innovation-sandbox-on-aws/issues/93))
+- Upgraded `fast-xml-parser` to mitigate:
+  - [CVE-2026-25896](https://nvd.nist.gov/vuln/detail/CVE-2026-25896)
+  - [CVE-2026-26278](https://nvd.nist.gov/vuln/detail/CVE-2026-26278)
+- Upgraded `ajv` to mitigate [CVE-2025-69873](https://nvd.nist.gov/vuln/detail/CVE-2025-69873)
+- Upgraded `qs` to mitigate [CVE-2026-2391](https://nvd.nist.gov/vuln/detail/CVE-2026-2391)
+
+## [1.1.8] - 2026-02-04
+
+### Security
+
+- Upgraded `aws-nuke` to mitigate:
+  - [CVE-2025-61726](https://nvd.nist.gov/vuln/detail/CVE-2025-61726)
+  - [CVE-2025-8732](https://nvd.nist.gov/vuln/detail/CVE-2025-8732)
+  - [CVE-2025-61728](https://nvd.nist.gov/vuln/detail/CVE-2025-61728)
+  - [CVE-2025-61730](https://nvd.nist.gov/vuln/detail/CVE-2025-61730)
+- Upgraded `fast-xml-parser` to mitigate [CVE-2026-25128](https://nvd.nist.gov/vuln/detail/CVE-2026-25128)
+- Upgraded `lodash` to mitigate [CVE-2025-13465](https://nvd.nist.gov/vuln/detail/CVE-2025-13465)
+
+## [1.1.7] - 2026-01-20
+
+### Fixed
+
+- Upgraded `aws-nuke` to v3.63.2 to resolve discovery short-circuit behavior when encountering SCP-protected log groups
+
+## [1.1.6] - 2026-01-12
+
+### Security
+
+- Upgraded `@remix-run/router` to mitigate [CVE-2026-22029](https://nvd.nist.gov/vuln/detail/CVE-2026-22029)
+- Upgraded `glib2` to mitigate [CVE-2025-14087](https://nvd.nist.gov/vuln/detail/CVE-2025-14087)
+- Upgraded `libcap` to mitigate:
+  - [CVE-2025-61727](https://nvd.nist.gov/vuln/detail/CVE-2025-61727)
+  - [CVE-2025-61729](https://nvd.nist.gov/vuln/detail/CVE-2025-61729)
+- Upgraded `python3` to mitigate:
+  - [CVE-2025-12084](https://nvd.nist.gov/vuln/detail/CVE-2025-12084)
+  - [CVE-2025-13837](https://nvd.nist.gov/vuln/detail/CVE-2025-13837)
+- Upgraded `python3-libs` to mitigate:
+  - [CVE-2025-12084](https://nvd.nist.gov/vuln/detail/CVE-2025-12084)
+  - [CVE-2025-13837](https://nvd.nist.gov/vuln/detail/CVE-2025-13837)
+- Upgraded `python-unversioned-command` to mitigate:
+  - [CVE-2025-12084](https://nvd.nist.gov/vuln/detail/CVE-2025-12084)
+  - [CVE-2025-13837](https://nvd.nist.gov/vuln/detail/CVE-2025-13837)
+
+## [1.1.5] - 2026-01-05
+
+### Security
+
+- Upgraded `qs` to mitigate [CVE-2025-15284](https://nvd.nist.gov/vuln/detail/CVE-2025-15284)
+
+## [1.1.4] - 2025-12-16
+
+### Security
+
+- Upgraded `aws-nuke` to mitigate:
+  - [CVE-2025-61729](https://nvd.nist.gov/vuln/detail/CVE-2025-61729)
+  - [CVE-2025-61727](https://nvd.nist.gov/vuln/detail/CVE-2025-61727)
+
+## [1.1.3] - 2025-12-10
+
+### Security
+
+- Upgraded `jws` to mitigate [CVE-2025-65945](https://nvd.nist.gov/vuln/detail/CVE-2025-65945)
+- Upgraded `mdast-util-to-hast` to mitigate [CVE-2025-66400](https://nvd.nist.gov/vuln/detail/CVE-2025-66400)
+- Upgraded `curl-minimal` to mitigate [CVE-2025-11563](https://explore.alas.aws.amazon.com/CVE-2025-11563.html)
+- Upgraded `libcurl-minimal` to mitigate [CVE-2025-11563](https://explore.alas.aws.amazon.com/CVE-2025-11563.html)
+- Upgraded `glib2` to mitigate [CVE-2025-13601](https://nvd.nist.gov/vuln/detail/CVE-2025-13601)
+- Upgraded `python-unversioned-command` to mitigate [CVE-2025-6075](https://nvd.nist.gov/vuln/detail/CVE-2025-6075)
+- Upgraded `python3-libs` to mitigate [CVE-2025-6075](https://nvd.nist.gov/vuln/detail/CVE-2025-6075)
+- Upgraded `python3` to mitigate [CVE-2025-6075](https://nvd.nist.gov/vuln/detail/CVE-2025-6075)
+
+## [1.1.2] - 2025-11-20
+
+### Security
+
+- Upgraded `js-yaml` to mitigate [CVE-2025-64718](https://nvd.nist.gov/vuln/detail/CVE-2025-64718)
+- Upgraded `glob` to mitigate [CVE-2025-64756](https://nvd.nist.gov/vuln/detail/CVE-2025-64756)
+
+## [1.1.1] - 2025-11-14
+
+### Fixed
+
+- Issue preventing cost report group from being set when `requireCostGroup` is set to `true` in AppConfig
+
+### Security
+
+- Upgraded `libcap` to mitigate:
+  - [CVE-2025-58188](https://nvd.nist.gov/vuln/detail/CVE-2025-58188)
+  - [CVE-2025-58185](https://nvd.nist.gov/vuln/detail/CVE-2025-58185)
+  - [CVE-2025-58186](https://nvd.nist.gov/vuln/detail/CVE-2025-58186)
+  - [CVE-2025-61723](https://nvd.nist.gov/vuln/detail/CVE-2025-61723)
+  - [CVE-2025-61725](https://nvd.nist.gov/vuln/detail/CVE-2025-61725)
+
 ## [1.1.0] - 2025-10-29
 
 ### Added
